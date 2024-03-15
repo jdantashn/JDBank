@@ -40,4 +40,8 @@ public abstract class Account {
 			this.client = client;
 		}
 		
+		public void setBalance(double amount) {
+			this.balance += amount;
+		}
+		
 }
