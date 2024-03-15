@@ -1,3 +1,4 @@
+package com.JDBank;
 
 public class Client {
 
@@ -13,16 +14,16 @@ public class Client {
 	    this.firstName = firstName;
 	  }
 	  
+		public int getClientNumber() {
+			return clientNumber;
+		}
+	  
 		public String getName() {
 			return name;
 		}
 		
 		public String getFirstName() {
 			return firstName;
-		}
-		
-		public int getClientNumber() {
-			return clientNumber;
 		}
 		
 		public void setName(String name) {
@@ -33,6 +34,13 @@ public class Client {
 			this.firstName = firstName;
 		}
 		
-
+	    @Override
+	    public String toString() {
+	        return "Client{" +
+	                "Client Number=" + clientNumber +
+	                ", Name=" + name +
+	                ", First name=" + firstName +
+	                '}';
+	    }
 
 }
