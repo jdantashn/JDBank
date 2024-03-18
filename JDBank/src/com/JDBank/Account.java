@@ -9,9 +9,10 @@ public abstract class Account {
 	
 	  // Constructor
 	  protected Account(String label, Client client) {
-		  accountNumber = ++nextId;
+		  this.accountNumber = ++nextId;
 		  this.label = label;
 		  this.client = client;
+		  this.balance = 0.0;
 	  }
 	  
 	  
@@ -41,7 +42,16 @@ public abstract class Account {
 		}
 		
 		public void setBalance(double amount) {
+			// TODO: implement Flowtype logic
 			this.balance += amount;
 		}
+		
+	    @Override
+	    public String toString() {
+	        return "accountNumber=" + accountNumber +
+	                ", label='" + label + '\'' +
+	                ", balance=" + balance +
+	                ", client=" + client;
+	    }
 		
 }
