@@ -22,7 +22,6 @@ import org.w3c.dom.Document;
 import org.w3c.dom.NodeList;
 import org.w3c.dom.Element;
 
-
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
@@ -36,16 +35,18 @@ public class Main {
 		  	Hashtable<Integer,Account> accountsHashtable;
 		  	Flow[] flows;
 		  	
+		  	// Comment methods, by default generating Accounts and Flows don't come from the JSON and XML files
+		  	// Swap the comments to change that
 			try {
 				// Accounts
-				//accounts = generateAccounts(clients);
-				accounts = generateAccountsFromXmlFile(new File("resources/accounts.xml"), clients);
+				accounts = generateAccounts(clients);
+				//accounts = generateAccountsFromXmlFile(new File("resources/accounts.xml"), clients);
 
 				accountsHashtable = generateHashtable(accounts);			
 				
 				// Flows
-				//flows = generateFlows(accounts);
-				flows = generateFlowsFromJsonFile(Path.of("resources", "flows.json"));
+				flows = generateFlows(accounts);
+				//flows = generateFlowsFromJsonFile(Path.of("resources", "flows.json"));
 				updateAccountBalances(flows, accountsHashtable);
 				
 			  	// Prints
@@ -118,14 +119,14 @@ public class Main {
 	        Flow[] flows = new Flow[1 + accounts.length + 1]; 
 
 	        // Calculate date 2 days from now
-	        LocalDate currentDate = LocalDate.now().plusDays(2);
-	        Date flowDate = Date.from(currentDate.atStartOfDay(ZoneId.systemDefault()).toInstant());
+	        LocalDate futureDate = LocalDate.now().plusDays(2);
+	        Date flowDate = Date.from(futureDate.atStartOfDay(ZoneId.systemDefault()).toInstant());
 
 	        // Debit of 50€ from account #1
 	        flows[0] = new Debit("Debit of 50€", 1, 50.0, 1, false, flowDate);
 
-	        
-	        int flowIndex = 1; // Start index for credit flows
+	        // Starting at 1 because we already included a Debit above in the flows array
+	        int flowIndex = 1;
 	        for (Account account : accounts) {
 	        	// Credit of 100.50€ on all current accounts
 	            if (account instanceof CurrentAccount) {
@@ -197,12 +198,6 @@ public class Main {
 	            case "Debit":
 	                return new Debit(jsonFlowData.getComment(), jsonFlowData.getIdentifier(), jsonFlowData.getAmount(), jsonFlowData.getTargetAccountNumber(), jsonFlowData.isEffect(), jsonFlowData.getDate());
 	            case "Credit":
-	            	if(jsonFlowData.getComment().contains("Credit of 100.50€ on current account")) {
-	            		// TODO add to all current accounts
-	            	}
-	            	else if(jsonFlowData.getComment().contains("Credit of 1500€ on savings account")){
-	            		// TODO add to all savings accounts
-	            	}
 	                return new Credit(jsonFlowData.getComment(), jsonFlowData.getIdentifier(), jsonFlowData.getAmount(), jsonFlowData.getTargetAccountNumber(), jsonFlowData.isEffect(), jsonFlowData.getDate());
 	            case "Transfer":
 	                return new Transfer(jsonFlowData.getComment(), jsonFlowData.getIdentifier(), jsonFlowData.getAmount(), jsonFlowData.getTargetAccountNumber(), jsonFlowData.isEffect(), jsonFlowData.getDate(), jsonFlowData.getSourceAccountNumber());
@@ -211,12 +206,9 @@ public class Main {
 	        }
 	    }
 	    
-	    
-	    
-	    
 	    // -------------------------- JSON END --------------------------------
 	    
-	    
+	    // -------------------------- XML START -------------------------------
 	    public static Account[] generateAccountsFromXmlFile(File xmlFile, Client[] clients) throws Exception {
 	        List<Account> accountList = new ArrayList<>();
 
@@ -246,13 +238,12 @@ public class Main {
 	    	            accountList.add(account);
 	            	}
 	            }
-	            // Assuming we can determine the account type from the XML element
-	            // Here, we assume the account type is specified as an attribute "type"
-
 	        }
 
 	        return accountList.toArray(new Account[0]);
 	    }
+	    
+	 // -------------------------- XML END -------------------------------
 	    
 	    
 }
