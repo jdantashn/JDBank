@@ -1,27 +1,63 @@
 package com.JDBank;
 
+import java.io.File;
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.time.LocalDate;
 import java.time.ZoneId;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Date;
 import java.util.Hashtable;
+import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.function.Predicate;
 
+import javax.xml.parsers.DocumentBuilder;
+import javax.xml.parsers.DocumentBuilderFactory;
+
+import org.w3c.dom.Document;
+import org.w3c.dom.NodeList;
+import org.w3c.dom.Element;
+
+
+import com.fasterxml.jackson.core.type.TypeReference;
+import com.fasterxml.jackson.databind.ObjectMapper;
+
+
+
 
 public class Main {
 	  public static void main(String[] args) {
-		  	Client[] clients = generateClients(2); // Create # clients
-		  	Account[] accounts = generateAccounts(clients); // Create accounts based on the # of clients
-		  	Hashtable<Integer,Account> accountsHashtable = generateHashtable(accounts);
-		  	Flow[] flows = loadFlows(accounts);
-		  	updateAccountBalances(flows, accountsHashtable);
-		  	printClients(clients);  	
-		  	//printAccounts(accounts);
-		  	printAccountsAscendingBalance(accountsHashtable);
-		  	printFlows(flows);
-		  	//checkNegativeBalances(accountsHashtable);
+		  	Client[] clients = generateClients(3);
+		  	Account[] accounts;
+		  	Hashtable<Integer,Account> accountsHashtable;
+		  	Flow[] flows;
+		  	
+			try {
+				// Accounts
+				//accounts = generateAccounts(clients);
+				accounts = generateAccountsFromXmlFile(new File("resources/accounts.xml"), clients);
+
+				accountsHashtable = generateHashtable(accounts);			
+				
+				// Flows
+				//flows = generateFlows(accounts);
+				flows = generateFlowsFromJsonFile(Path.of("resources", "flows.json"));
+				updateAccountBalances(flows, accountsHashtable);
+				
+			  	// Prints
+			  	printClients(clients);  			  	
+			  	printAccountsAscendingBalance(accountsHashtable);
+			  	checkNegativeBalances(accountsHashtable);
+			  	printFlows(flows);
+			} catch (Exception e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
+
 		  	
 	  }
 	  
@@ -77,7 +113,7 @@ public class Main {
 	                .forEach(entry -> System.out.println(entry.getValue().toString()));
 	    }
 	    
-	    public static Flow[] loadFlows(Account[] accounts) {	  
+	    public static Flow[] generateFlows(Account[] accounts) {	  
 	    	// (debit from #1) + (credit & savings accounts) + (transform from #1 to #2)
 	        Flow[] flows = new Flow[1 + accounts.length + 1]; 
 
@@ -130,7 +166,6 @@ public class Main {
 	                }
 	            }
 	        }
-	        checkNegativeBalances(accountMap);
 	    }
 	    
 	    public static void checkNegativeBalances(Map<Integer, Account> accountMap) {
@@ -143,9 +178,83 @@ public class Main {
 	                System.out.println("Account " + account.getAccountNumber() + " has a negative balance."));
 	    }
 	    
-	    
-	    
+	    // ------------------------ JSON Start -------------------------------
 
+	    public static Flow[] generateFlowsFromJsonFile(Path jsonFilePath) throws IOException {
+	        ObjectMapper mapper = new ObjectMapper();
+	        
+	        // Deserialize JSON array into a list of JsonFlowData objects
+	        List<JsonFlowData> jsonFlowDataList = mapper.readValue(Files.newBufferedReader(jsonFilePath), new TypeReference<List<JsonFlowData>>(){});
+	        
+	        // Convert JsonFlowData objects to Flow objects 
+	        return jsonFlowDataList.stream()
+                    .map(Main::mapToFlow)
+                    .toArray(Flow[]::new);
+	    }
+	    
+	    private static Flow mapToFlow(JsonFlowData jsonFlowData) {
+	        switch (jsonFlowData.getType()) {
+	            case "Debit":
+	                return new Debit(jsonFlowData.getComment(), jsonFlowData.getIdentifier(), jsonFlowData.getAmount(), jsonFlowData.getTargetAccountNumber(), jsonFlowData.isEffect(), jsonFlowData.getDate());
+	            case "Credit":
+	            	if(jsonFlowData.getComment().contains("Credit of 100.50€ on current account")) {
+	            		// TODO add to all current accounts
+	            	}
+	            	else if(jsonFlowData.getComment().contains("Credit of 1500€ on savings account")){
+	            		// TODO add to all savings accounts
+	            	}
+	                return new Credit(jsonFlowData.getComment(), jsonFlowData.getIdentifier(), jsonFlowData.getAmount(), jsonFlowData.getTargetAccountNumber(), jsonFlowData.isEffect(), jsonFlowData.getDate());
+	            case "Transfer":
+	                return new Transfer(jsonFlowData.getComment(), jsonFlowData.getIdentifier(), jsonFlowData.getAmount(), jsonFlowData.getTargetAccountNumber(), jsonFlowData.isEffect(), jsonFlowData.getDate(), jsonFlowData.getSourceAccountNumber());
+	            default:
+	                throw new IllegalArgumentException("Invalid flow type: " + jsonFlowData.getType());
+	        }
+	    }
+	    
+	    
+	    
+	    
+	    // -------------------------- JSON END --------------------------------
+	    
+	    
+	    public static Account[] generateAccountsFromXmlFile(File xmlFile, Client[] clients) throws Exception {
+	        List<Account> accountList = new ArrayList<>();
+
+	        DocumentBuilderFactory factory = DocumentBuilderFactory.newInstance();
+	        DocumentBuilder builder = factory.newDocumentBuilder();
+	        Document document = builder.parse(xmlFile);
+
+	        NodeList accountNodes = document.getElementsByTagName("account");
+	        for (int i = 0; i < accountNodes.getLength(); i++) {
+	            Element accountElement = (Element) accountNodes.item(i);
+	            String label = accountElement.getAttribute("label");
+	            NodeList clientNodes = accountElement.getElementsByTagName("client");
+	            Element clientElement = (Element) clientNodes.item(0);
+	            int clientNumber = Integer.parseInt(clientElement.getAttribute("clientNumber"));
+	            
+
+	            // Find the right client to associate
+	            for (int j = 0; j < clients.length ; j++) {
+	            	if(clients[j].getClientNumber() == clientNumber) {
+	    	            String accountType = accountElement.getAttribute("type");
+	    	            Account account;
+	    	            if ("Savings".equalsIgnoreCase(accountType)) { // Savings
+	    	                account = new SavingsAccount(label, clients[j]);
+	    	            } else { // Current
+	    	                account = new CurrentAccount(label, clients[j]);
+	    	            }
+	    	            accountList.add(account);
+	            	}
+	            }
+	            // Assuming we can determine the account type from the XML element
+	            // Here, we assume the account type is specified as an attribute "type"
+
+	        }
+
+	        return accountList.toArray(new Account[0]);
+	    }
+	    
+	    
 }
 
 

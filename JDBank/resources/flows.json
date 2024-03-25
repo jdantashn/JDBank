@@ -1,0 +1,61 @@
+[
+  {
+    "type": "Debit",
+    "comment": "Debit of 50€",
+    "identifier": 1,
+    "amount": 50.0,
+    "targetAccountNumber": 1,
+    "effect": false,
+    "date": "2024-03-20"
+  },
+  {
+    "type": "Credit",
+    "comment": "Credit of 100.50€ on current account",
+    "identifier": 2,
+    "amount": 100.50,
+    "targetAccountNumber": 1, 
+    "effect": true,
+    "date": "2024-03-20",
+    "sourceAccountNumber": 0
+  },
+  {
+    "type": "Credit",
+    "comment": "Credit of 100.50€ on current account",
+    "identifier": 3,
+    "amount": 100.50,
+    "targetAccountNumber": 3, 
+    "effect": true,
+    "date": "2024-03-20",
+    "sourceAccountNumber": 0
+  },
+  {
+    "type": "Credit",
+    "comment": "Credit of 1500€ on savings account",
+    "identifier": 4,
+    "amount": 1500.0,
+    "targetAccountNumber": 2, 
+    "effect": true,
+    "date": "2024-03-20",
+    "sourceAccountNumber": 0
+  },
+  {
+    "type": "Credit",
+    "comment": "Credit of 1500€ on savings account",
+    "identifier": 5,
+    "amount": 1500.0,
+    "targetAccountNumber": 4, 
+    "effect": true,
+    "date": "2024-03-20",
+    "sourceAccountNumber": 0
+  },
+  {
+    "type": "Transfer",
+    "comment": "Transfer of 50€ from account n°1 to account n°2",
+    "identifier": 6,
+    "amount": 50.0,
+    "targetAccountNumber": 2,
+    "effect": false,
+    "date": "2024-03-20",
+    "sourceAccountNumber": 1
+  }
+]

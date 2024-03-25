@@ -1,0 +1,15 @@
+<accounts>
+    <account type="Savings" label="Savings Account 1">
+        <client clientNumber="1"/>
+    </account>
+    <account type="Savings" label="Savings Account 2">
+        <client clientNumber="2"/>
+    </account>
+    <account type="Current" label="Current Account 1">
+        <client clientNumber="1"/>
+    </account>
+    <account type="Current" label="Current Account 2">
+        <client clientNumber="2"/>
+    </account>
+    <!-- Add more account elements as needed -->
+</accounts>
